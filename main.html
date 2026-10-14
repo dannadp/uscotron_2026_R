@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USCOTRON 2026 - Control en Vivo & Llaves de Torneo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <i class="fa-solid fa-robot logo-icon"></i>
+            <div>
+                <div class="brand-title">USCOTRON 2026</div>
+                <div class="brand-subtitle"><i class="fa-solid fa-bolt"></i> Plataforma Oficial de Control en Vivo</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline" onclick="toggleTimerWidget()"><i class="fa-solid fa-stopwatch"></i> Cronómetro</button>
+            <button class="btn btn-outline" onclick="toggleTVMode()"><i class="fa-solid fa-desktop"></i> Modo TV</button>
+            <button class="btn btn-outline" onclick="exportReport()"><i class="fa-solid fa-print"></i> Reporte</button>
+            <div id="authStatusBadge" class="auth-badge public">
+                <i class="fa-solid fa-eye"></i> MODO VISITANTE
+            </div>
+            <button id="loginBtn" class="btn btn-cyan" onclick="openLoginModal()">
+                <i class="fa-solid fa-lock"></i> Acceso Admin
+            </button>
+        </div>
+    </header>
+
+    <div class="controls-bar">
+        <div class="level-pills">
+            <button class="pill active" onclick="switchLevel('Colegio')"><i class="fa-solid fa-school"></i> Colegio</button>
+            <button class="pill" onclick="switchLevel('Universidad')"><i class="fa-solid fa-graduation-cap"></i> Universidad</button>
+        </div>
+
+        <div class="category-selector">
+            <button class="cat-btn active" onclick="switchCategory('Robogol Fútbol')">
+                <i class="fa-solid fa-futbol"></i> Robogol Fútbol
+            </button>
+            <button class="cat-btn" onclick="switchCategory('Seguidor de línea velocista')">
+                <i class="fa-solid fa-gauge-high"></i> Seguidor Velocista
+            </button>
+            <button class="cat-btn" onclick="switchCategory('Minisumo RC')">
+                <i class="fa-solid fa-shield-halved"></i> Minisumo RC
+            </button>
+            <button class="cat-btn" id="burstbotBtn" onclick="switchCategory('BURSTBOT( Batalla de globos)')">
+                <i class="fa-solid fa-burst"></i> BURSTBOT
+            </button>
+        </div>
+    </div>
+
+    <!-- CRONÓMETRO FLOTANTE EN VIVO -->
+    <div class="timer-widget" id="timerWidget">
+        <div class="timer-header">
+            <span><i class="fa-solid fa-stopwatch"></i> CRONÓMETRO OFICIAL</span>
+            <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="toggleTimerWidget()"></i>
+        </div>
+        <div class="timer-display" id="timerDisplay">02:00.0</div>
+        <div class="timer-controls">
+            <button class="btn btn-cyan" onclick="startTimer()"><i class="fa-solid fa-play"></i></button>
+            <button class="btn btn-outline" onclick="pauseTimer()"><i class="fa-solid fa-pause"></i></button>
+            <button class="btn btn-danger" onclick="resetTimer()"><i class="fa-solid fa-rotate-left"></i></button>
+        </div>
+        <div style="margin-top: 10px; display:flex; gap:5px; justify-content:center;">
+            <button class="btn btn-outline" style="padding: 2px 8px; font-size:0.75rem;" onclick="setPresetTime(120)">2 Min</button>
+            <button class="btn btn-outline" style="padding: 2px 8px; font-size:0.75rem;" onclick="setPresetTime(60)">1 Min</button>
+            <button class="btn btn-outline" style="padding: 2px 8px; font-size:0.75rem;" onclick="setPresetTime(30)">30 Seg</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <div>
+                <h2 class="category-title" id="catTitleDisplay">
+                    <i class="fa-solid fa-trophy" style="color: var(--accent-gold);"></i> Robogol Fútbol
+                </h2>
+                <span class="category-badge" id="levelBadgeDisplay">Nivel: Colegio</span>
+            </div>
+            <div id="adminControlsArea" style="display: none;">
+                <button class="btn btn-outline" onclick="openAddTeamModal()">
+                    <i class="fa-solid fa-plus"></i> Agregar Equipo
+                </button>
+                <button class="btn btn-danger" onclick="resetToDefaultData()">
+                    <i class="fa-solid fa-rotate-left"></i> Reiniciar Datos
+                </button>
+            </div>
+        </div>
+
+        <div id="viewArea"></div>
+    </div>
+
+    <!-- MODAL LOGIN ADMIN -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span><i class="fa-solid fa-user-shield"></i> Iniciar Sesión Admin</span>
+                <i class="fa-solid fa-xmark close-modal" onclick="closeModal('loginModal')"></i>
+            </div>
+            <div class="form-group">
+                <label>Usuario</label>
+                <input type="text" id="adminUser" class="form-control" placeholder="Ingrese usuario...">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="adminPass" class="form-control" placeholder="Ingrese contraseña...">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('loginModal')">Cancelar</button>
+                <button class="btn btn-cyan" onclick="handleLogin()">Ingresar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FICHA TÉCNICA DEL EQUIPO -->
+    <div class="modal" id="teamDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="detailTeamName"><i class="fa-solid fa-robot"></i> Ficha del Equipo</span>
+                <i class="fa-solid fa-xmark close-modal" onclick="closeModal('teamDetailModal')"></i>
+            </div>
+            <div id="teamDetailBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-cyan" onclick="closeModal('teamDetailModal')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT MATCH -->
+    <div class="modal" id="editMatchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span><i class="fa-solid fa-pen-to-square"></i> Actualizar Marcador</span>
+                <i class="fa-solid fa-xmark close-modal" onclick="closeModal('editMatchModal')"></i>
+            </div>
+            <input type="hidden" id="editMatchId">
+            <div class="form-group">
+                <label id="teamA_label">Equipo A</label>
+                <input type="number" id="teamA_score" class="form-control" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label id="teamB_label">Equipo B</label>
+                <input type="number" id="teamB_score" class="form-control" min="0" value="0">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('editMatchModal')">Cancelar</button>
+                <button class="btn btn-cyan" onclick="saveMatchScore()">Guardar Marcador</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MARCAS VELOCISTA Y PUNTOS -->
+    <div class="modal" id="addScoreModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span><i class="fa-solid fa-stopwatch"></i> Registrar Marcas</span>
+                <i class="fa-solid fa-xmark close-modal" onclick="closeModal('addScoreModal')"></i>
+            </div>
+            <input type="hidden" id="editTeamIndex">
+            <div class="form-group">
+                <label>Nombre del Equipo</label>
+                <input type="text" id="scoreTeamName" class="form-control" readonly>
+            </div>
+            
+            <div id="velocistaInputs" style="display: none;">
+                <div class="form-group">
+                    <label>Intento 1 (segundos)</label>
+                    <input type="number" step="0.01" id="t1Value" class="form-control" placeholder="Ej: 12.45 (0 si se salió)">
+                </div>
+                <div class="form-group">
+                    <label>Intento 2 (segundos)</label>
+                    <input type="number" step="0.01" id="t2Value" class="form-control" placeholder="Ej: 11.80 (0 si se salió)">
+                </div>
+                <div class="form-group">
+                    <label>Intento 3 (segundos)</label>
+                    <input type="number" step="0.01" id="t3Value" class="form-control" placeholder="Ej: 10.95 (0 si se salió)">
+                </div>
+            </div>
+
+            <div id="standardInput">
+                <div class="form-group">
+                    <label>Puntuación</label>
+                    <input type="number" step="1" id="scoreValue" class="form-control" placeholder="Puntos obtenidos">
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('addScoreModal')">Cancelar</button>
+                <button class="btn btn-cyan" onclick="saveTeamScore()">Guardar Registro</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
